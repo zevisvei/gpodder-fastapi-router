@@ -12,6 +12,7 @@ plus an admin dashboard and a CLI.
 - [Dashboard](dashboard.md) — admin UI: users, devices, stats
 - [CLI](cli.md) — `python -m gpodder_router` / `gpodder-router`
 - [API reference](api-reference.md) — endpoint overview + auto-generated docs
+- [Store API](store-api.md) — direct DB access classes (no HTTP) used by the API
 - [Client compatibility](clients.md) — AntennaPod, gPodder, Podverse...
 
 ## Live API documentation

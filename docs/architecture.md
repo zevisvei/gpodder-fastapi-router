@@ -30,6 +30,12 @@ src/gpodder_router/
 6. FastAPI serialises the response (JSON by default; alt formats handled
    by `formats.py`).
 
+Each service module exposes a `*Store` class (e.g. `EpisodeStore`,
+`SubscriptionStore`, `UserStore`) that contains the DB logic. The HTTP
+free functions in the same module are thin adapters around these
+classes; library code can construct a `*Store` directly and skip the
+HTTP layer entirely. See [Store API](store-api.md) for the full mapping.
+
 ## Database tables
 
 | Table                          | Purpose                                              |

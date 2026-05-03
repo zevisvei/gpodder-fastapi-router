@@ -3,6 +3,10 @@
 The router implements every endpoint in
 [mygpo OpenAPI 2.11.0](https://github.com/gpodder/mygpo/blob/master/mygpo/api/openapi.yaml).
 
+Every endpoint listed below is also reachable from Python without HTTP
+via a `*Store` class — see [Store API](store-api.md) for the full
+endpoint → method mapping.
+
 For interactive exploration, run the server and open:
 
 - `http://localhost:8000/docs` — Swagger UI

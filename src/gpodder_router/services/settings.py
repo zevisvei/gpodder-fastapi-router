@@ -38,6 +38,93 @@ def _validate_scope_args(
     raise NotFoundError(f"unknown scope {scope!r}")
 
 
+class SettingStore:
+    """Direct DB access for scoped settings (account/device/podcast/episode)."""
+
+    def __init__(self, session: AsyncSession, user: User) -> None:
+        self.session = session
+        self.user = user
+
+    async def get(
+        self,
+        scope: SettingsScope,
+        *,
+        podcast: str | None = None,
+        device: str | None = None,
+        episode: str | None = None,
+    ) -> dict[str, Any]:
+        target, podcast_url = _validate_scope_args(
+            scope, podcast=podcast, device=device, episode=episode
+        )
+        rows = (
+            await self.session.scalars(
+                select(Setting).where(
+                    Setting.user_id == self.user.id,
+                    Setting.scope == scope.value,
+                    Setting.target == target,
+                    Setting.podcast_url == podcast_url,
+                )
+            )
+        ).all()
+        return {r.key: json.loads(r.value) for r in rows}
+
+    async def save(
+        self,
+        scope: SettingsScope,
+        *,
+        podcast: str | None = None,
+        device: str | None = None,
+        episode: str | None = None,
+        set_values: dict[str, Any] | None = None,
+        remove_keys: list[str] | None = None,
+    ) -> dict[str, Any]:
+        target, podcast_url = _validate_scope_args(
+            scope, podcast=podcast, device=device, episode=episode
+        )
+        set_values = set_values or {}
+        remove_keys = remove_keys or []
+        if remove_keys:
+            await self.session.execute(
+                delete(Setting).where(
+                    Setting.user_id == self.user.id,
+                    Setting.scope == scope.value,
+                    Setting.target == target,
+                    Setting.podcast_url == podcast_url,
+                    Setting.key.in_(remove_keys),
+                )
+            )
+        for key, value in set_values.items():
+            existing = (
+                await self.session.scalars(
+                    select(Setting).where(
+                        Setting.user_id == self.user.id,
+                        Setting.scope == scope.value,
+                        Setting.target == target,
+                        Setting.podcast_url == podcast_url,
+                        Setting.key == key,
+                    )
+                )
+            ).first()
+            encoded = json.dumps(value)
+            if existing is None:
+                self.session.add(
+                    Setting(
+                        user_id=self.user.id,
+                        scope=scope.value,
+                        target=target,
+                        podcast_url=podcast_url,
+                        key=key,
+                        value=encoded,
+                    )
+                )
+            else:
+                existing.value = encoded
+        await self.session.commit()
+        return await self.get(
+            scope, podcast=podcast, device=device, episode=episode
+        )
+
+
 async def get_settings(
     session: AsyncSession,
     user: User,
@@ -47,20 +134,9 @@ async def get_settings(
     device: str | None,
     episode: str | None,
 ) -> dict[str, Any]:
-    target, podcast_url = _validate_scope_args(
+    return await SettingStore(session, user).get(
         scope, podcast=podcast, device=device, episode=episode
     )
-    rows = (
-        await session.scalars(
-            select(Setting).where(
-                Setting.user_id == user.id,
-                Setting.scope == scope.value,
-                Setting.target == target,
-                Setting.podcast_url == podcast_url,
-            )
-        )
-    ).all()
-    return {r.key: json.loads(r.value) for r in rows}
 
 
 async def save_settings(
@@ -74,46 +150,11 @@ async def save_settings(
     set_values: dict[str, Any],
     remove_keys: list[str],
 ) -> dict[str, Any]:
-    target, podcast_url = _validate_scope_args(
-        scope, podcast=podcast, device=device, episode=episode
-    )
-    if remove_keys:
-        await session.execute(
-            delete(Setting).where(
-                Setting.user_id == user.id,
-                Setting.scope == scope.value,
-                Setting.target == target,
-                Setting.podcast_url == podcast_url,
-                Setting.key.in_(remove_keys),
-            )
-        )
-    for key, value in set_values.items():
-        existing = (
-            await session.scalars(
-                select(Setting).where(
-                    Setting.user_id == user.id,
-                    Setting.scope == scope.value,
-                    Setting.target == target,
-                    Setting.podcast_url == podcast_url,
-                    Setting.key == key,
-                )
-            )
-        ).first()
-        encoded = json.dumps(value)
-        if existing is None:
-            session.add(
-                Setting(
-                    user_id=user.id,
-                    scope=scope.value,
-                    target=target,
-                    podcast_url=podcast_url,
-                    key=key,
-                    value=encoded,
-                )
-            )
-        else:
-            existing.value = encoded
-    await session.commit()
-    return await get_settings(
-        session, user, scope, podcast=podcast, device=device, episode=episode
+    return await SettingStore(session, user).save(
+        scope,
+        podcast=podcast,
+        device=device,
+        episode=episode,
+        set_values=set_values,
+        remove_keys=remove_keys,
     )

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python.exe -c \"from gpodder_router.services import users, sessions, devices, sync, subscriptions, settings, favorites, lists, episodes; print\\('ok'\\)\")"
+    ]
+  }
+}

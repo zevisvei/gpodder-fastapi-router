@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Actions - {{ user.username }}{% endblock %}
+{% block content %}
+<h2>Action log</h2>
+<p><small style="opacity:0.7">Note: AntennaPod stamps every action with the
+sync time, not the actual play time. The "synced" timestamp below reflects when
+the server received the action.</small></p>
+
+<form method="get" action="{{ prefix }}/me/actions">
+  <div class="grid">
+    <label>Action type
+      <select name="action">
+        <option value="">(any)</option>
+        {% for a in action_types %}
+        <option value="{{ a }}" {% if filter_action == a %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Device
+      <select name="device">
+        <option value="">(any)</option>
+        {% for d in device_ids %}
+        <option value="{{ d }}" {% if filter_device == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Podcast
+      <select name="podcast">
+        <option value="">(any)</option>
+        {% for p in podcast_options %}
+        <option value="{{ p.url }}" {% if filter_podcast == p.url %}selected{% endif %}>{{ p.title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </div>
+  <div class="grid">
+    <label>Sort
+      <select name="sort">
+        <option value="uploaded_desc" {% if sort == 'uploaded_desc' %}selected{% endif %}>Newest first</option>
+        <option value="uploaded_asc"  {% if sort == 'uploaded_asc' %}selected{% endif %}>Oldest first</option>
+        <option value="action_asc"    {% if sort == 'action_asc' %}selected{% endif %}>Action A→Z</option>
+        <option value="action_desc"   {% if sort == 'action_desc' %}selected{% endif %}>Action Z→A</option>
+        <option value="podcast_asc"   {% if sort == 'podcast_asc' %}selected{% endif %}>Podcast A→Z</option>
+        <option value="podcast_desc"  {% if sort == 'podcast_desc' %}selected{% endif %}>Podcast Z→A</option>
+      </select>
+    </label>
+    <label>Per page
+      <select name="per_page">
+        {% for n in [25, 50, 100, 200] %}
+        <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <input type="hidden" name="page" value="1">
+  </div>
+  <button type="submit">Apply</button>
+</form>
+
+<p>{{ total }} record(s) · page {{ page }} of {{ total_pages }}</p>
+{% for it in items %}
+{% set a = it.row %}
+<div class="episode-row">
+  <a href="{{ prefix }}/me/podcast?url={{ a.podcast_url|urlencode_q }}" class="thumb"
+     {% if it.podcast_image %}style="background-image:url('{{ it.podcast_image }}')"{% endif %}></a>
+  <div class="info">
+    <div class="title">{{ it.episode_title or a.episode_url }}</div>
+    <div class="sub">
+      <strong>{{ a.action }}</strong> · {{ it.podcast_title }}
+      {% if a.device_id %} · device <code>{{ a.device_id }}</code>{% endif %}
+    </div>
+    <div class="meta">
+      synced {{ a.uploaded|fmt_ts }}
+      {% if a.action == 'play' and a.position is not none %}
+        · position {{ a.position }}s
+      {% endif %}
+      · <a href="{{ a.episode_url }}" target="_blank" rel="noopener">listen ↗</a>
+    </div>
+  </div>
+</div>
+{% else %}
+<p><em>No actions match.</em></p>
+{% endfor %}
+
+{% if total_pages > 1 %}
+{% set base_qs = "action=" ~ filter_action ~ "&device=" ~ filter_device ~ "&podcast=" ~ (filter_podcast|urlencode_q) ~ "&sort=" ~ sort ~ "&per_page=" ~ per_page %}
+<nav style="margin-top:1.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+  {% if page > 1 %}
+    <a role="button" class="secondary" href="?{{ base_qs }}&page=1">« First</a>
+    <a role="button" class="secondary" href="?{{ base_qs }}&page={{ page - 1 }}">‹ Prev</a>
+  {% endif %}
+  <span>Page {{ page }} / {{ total_pages }}</span>
+  {% if page < total_pages %}
+    <a role="button" class="secondary" href="?{{ base_qs }}&page={{ page + 1 }}">Next ›</a>
+    <a role="button" class="secondary" href="?{{ base_qs }}&page={{ total_pages }}">Last »</a>
+  {% endif %}
+</nav>
+{% endif %}
+{% endblock %}

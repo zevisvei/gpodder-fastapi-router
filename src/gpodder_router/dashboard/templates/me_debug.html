@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Debug - {{ user.username }}{% endblock %}
+{% block content %}
+<h2>Action upload debug</h2>
+<p>
+  File: <code>{{ path }}</code>
+  {% if path_exists %}<span style="color:#7ce07c">● exists</span>{% else %}<span style="color:#e07070">○ missing</span>{% endif %}
+</p>
+<p>
+  Set environment variable <code>GPODDER_DEBUG_ACTIONS_FILE=/path/to/dump.jsonl</code>
+  before starting the server. Each <code>POST /api/2/episodes/&lt;username&gt;.json</code>
+  appends one JSON line.
+</p>
+
+<form method="get" action="{{ prefix }}/me/debug">
+  <label>Show last
+    <input type="number" name="limit" value="{{ limit }}" min="1" max="200">
+  </label>
+  <button type="submit">Reload</button>
+</form>
+
+<p>{{ entries|length }} entry(ies)</p>
+{% for e in entries %}
+<details style="margin-bottom:0.75rem;border:1px solid #2a2f36;border-radius:0.4rem;padding:0.5rem 0.75rem">
+  <summary>
+    <strong>{{ e.ts|fmt_ts if e.ts else '?' }}</strong>
+    {% if e.headers and e.headers['user-agent'] %}
+      · <code>{{ e.headers['user-agent'] }}</code>
+    {% endif %}
+    {% if e.body_parsed and e.body_parsed is iterable and e.body_parsed is not string %}
+      · {{ e.body_parsed|length }} action(s)
+    {% endif %}
+    {% if e.client_ip %} · {{ e.client_ip }}{% endif %}
+  </summary>
+  <pre style="white-space:pre-wrap;word-break:break-all;font-size:0.8rem;background:#0e1115;padding:0.5rem;border-radius:0.3rem;margin-top:0.5rem">{{ e|tojson(indent=2) }}</pre>
+</details>
+{% else %}
+<p><em>No entries yet.</em></p>
+{% endfor %}
+{% endblock %}

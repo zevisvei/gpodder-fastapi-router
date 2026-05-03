@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}My dashboard - {{ user.username }}{% endblock %}
+{% block content %}
+<h2>My dashboard</h2>
+<p>Signed in as <strong>{{ user.username }}</strong>{% if user.email %} · {{ user.email }}{% endif %}{% if is_admin %} · <em>admin</em>{% endif %}.</p>
+<div class="grid">
+  <article><header>Subscriptions</header><h3>{{ stats.subscriptions }}</h3></article>
+  <article><header>Devices</header><h3>{{ stats.devices }}</h3></article>
+  <article><header>Episode actions</header><h3>{{ stats.episode_actions }}</h3></article>
+  <article><header>Favorites</header><h3>{{ stats.favorites }}</h3></article>
+</div>
+{% if stats.last_action %}
+<p><small>Last action uploaded: {{ stats.last_action|fmt_ts }}</small></p>
+{% endif %}
+<h3>Sections</h3>
+<ul>
+  <li><a href="{{ prefix }}/me/podcasts">Podcasts ({{ stats.subscriptions }})</a></li>
+  <li><a href="{{ prefix }}/me/episodes">Episodes &amp; favorites</a></li>
+  <li><a href="{{ prefix }}/me/actions">Action log</a></li>
+  <li><a href="{{ prefix }}/me/devices">Devices ({{ stats.devices }})</a></li>
+  <li><a href="{{ prefix }}/me/stats">Statistics</a></li>
+</ul>
+{% endblock %}

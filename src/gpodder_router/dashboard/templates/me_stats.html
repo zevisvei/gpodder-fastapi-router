@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Stats - {{ user.username }}{% endblock %}
+{% block content %}
+<h2>Statistics</h2>
+
+<div class="grid">
+  <article>
+    <header>Listening time</header>
+    <h3>{{ (listened_seconds // 3600) }}h {{ ((listened_seconds % 3600) // 60) }}m</h3>
+    <small>Sum of farthest position reached per episode (deduped)</small>
+  </article>
+  <article>
+    <header>Episodes started</header>
+    <h3>{{ episodes_started }}</h3>
+    <small>{{ episodes_completed }} completed</small>
+  </article>
+  <article>
+    <header>First action</header>
+    <h3>{{ first_ts|fmt_ts or '—' }}</h3>
+  </article>
+  <article>
+    <header>Last action</header>
+    <h3>{{ last_ts|fmt_ts or '—' }}</h3>
+  </article>
+</div>
+
+<h3>Actions by type</h3>
+{% set max_action = (per_action|map(attribute=1)|max) if per_action else 1 %}
+{% for name, count in per_action %}
+<div class="bar-row">
+  <div class="label"><strong>{{ name }}</strong></div>
+  <div class="bar"><div style="width: {{ (count / max_action * 100)|round(1) }}%"></div></div>
+  <div class="count">{{ count }}</div>
+</div>
+{% else %}
+<p><em>No data yet.</em></p>
+{% endfor %}
+
+<h3>Actions by device</h3>
+{% set max_device = (per_device|map(attribute=1)|max) if per_device else 1 %}
+{% for name, count in per_device %}
+<div class="bar-row">
+  <div class="label"><code>{{ name }}</code></div>
+  <div class="bar"><div style="width: {{ (count / max_device * 100)|round(1) }}%"></div></div>
+  <div class="count">{{ count }}</div>
+</div>
+{% else %}
+<p><em>No data yet.</em></p>
+{% endfor %}
+
+<h3>Top podcasts</h3>
+<div class="podcast-grid">
+  {% for p in top_podcasts %}
+  <a class="podcast-card" href="{{ prefix }}/me/podcast?url={{ p.url|urlencode_q }}">
+    <div class="cover" {% if p.image %}style="background-image:url('{{ p.image }}')"{% endif %}></div>
+    <div class="body">
+      <h4>{{ p.title }}</h4>
+      <div class="meta">{{ p.count }} actions</div>
+    </div>
+  </a>
+  {% else %}
+  <p><em>No data yet.</em></p>
+  {% endfor %}
+</div>
+{% endblock %}

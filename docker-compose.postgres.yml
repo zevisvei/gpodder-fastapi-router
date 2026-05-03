@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: gpodder-db
+    environment:
+      POSTGRES_USER: gpodder
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gpodder}
+      POSTGRES_DB: gpodder
+    volumes:
+      - gpodder-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gpodder"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  gpodder:
+    build: .
+    container_name: gpodder-router
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      GPODDER_DATABASE_URL: postgresql+asyncpg://gpodder:${POSTGRES_PASSWORD:-gpodder}@db:5432/gpodder
+      GPODDER_BASE_URL: ${GPODDER_BASE_URL:-http://localhost:8000}
+      GPODDER_ADMIN_USERNAMES: ${GPODDER_ADMIN_USERNAMES:-[]}
+    restart: unless-stopped
+
+volumes:
+  gpodder-pgdata:

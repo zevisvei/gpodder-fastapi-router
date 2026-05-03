@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Episodes - {{ user.username }}{% endblock %}
+{% block content %}
+<h2>Episodes</h2>
+
+<h3>Favorites ({{ favorites|length }})</h3>
+{% for f in favorites %}
+<div class="episode-row">
+  <a href="{{ prefix }}/me/podcast?url={{ f.podcast_url|urlencode_q }}" class="thumb"
+     {% if f.podcast_image %}style="background-image:url('{{ f.podcast_image }}')"{% endif %}></a>
+  <div class="info">
+    <div class="title">{{ f.title or '(untitled)' }}</div>
+    <div class="sub">{{ f.podcast_title }}</div>
+    <div class="meta">
+      {% if f.pub_date %}{{ f.pub_date }}{% endif %}
+      {% if f.duration %} · {{ f.duration|fmt_duration }}{% endif %}
+      · <a href="{{ f.episode_url }}" target="_blank" rel="noopener">listen ↗</a>
+    </div>
+  </div>
+</div>
+{% else %}
+<p><em>No favorites yet.</em></p>
+{% endfor %}
+
+<h3 style="margin-top:2rem">Recently active episodes ({{ recent|length }})</h3>
+{% for e in recent %}
+<div class="episode-row">
+  <a href="{{ prefix }}/me/podcast?url={{ e.podcast_url|urlencode_q }}" class="thumb"
+     {% if e.podcast_image %}style="background-image:url('{{ e.podcast_image }}')"{% endif %}></a>
+  <div class="info">
+    <div class="title">{{ e.episode_title or e.episode_url }}</div>
+    <div class="sub">{{ e.podcast_title }}</div>
+    <div class="meta">
+      {{ e.action_count }} action(s) · last {{ e.last_seen|fmt_ts }}
+      {% if e.duration %} · {{ e.duration|fmt_duration }}{% endif %}
+      · <a href="{{ e.episode_url }}" target="_blank" rel="noopener">listen ↗</a>
+    </div>
+  </div>
+</div>
+{% else %}
+<p><em>No episode activity yet.</em></p>
+{% endfor %}
+{% endblock %}

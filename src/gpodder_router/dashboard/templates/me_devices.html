@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Devices - {{ user.username }}{% endblock %}
+{% block content %}
+<h2>Devices</h2>
+<p>Total: <strong>{{ devices|length }}</strong></p>
+<table>
+  <thead>
+    <tr><th>ID</th><th>Device ID</th><th>Caption</th><th>Type</th><th>Active subs</th><th>Created</th></tr>
+  </thead>
+  <tbody>
+    {% for d in devices %}
+    <tr>
+      <td>{{ d.id }}</td>
+      <td><code>{{ d.deviceid }}</code></td>
+      <td>{{ d.caption or '—' }}</td>
+      <td>{{ d.type }}</td>
+      <td>{{ sub_by_device.get(d.id, 0) }}</td>
+      <td><small>{{ d.created }}</small></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6"><em>No devices registered</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

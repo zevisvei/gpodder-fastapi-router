@@ -1,0 +1,23 @@
+# gpodder-fastapi-router TOML config.
+# Load with:
+#   from gpodder_router import GPodderConfig
+#   cfg = GPodderConfig.from_toml("examples/config.toml")
+
+[gpodder]
+database_url = "sqlite+aiosqlite:///./gpodder.db"
+# database_url = "postgresql+asyncpg://gpodder:gpodder@localhost:5432/gpodder"
+
+base_url = "http://localhost:8000"
+feedservice_url = "http://localhost:8000/feedservice"
+update_timeout = 604800
+
+allow_registration = true
+bcrypt_rounds = 12
+
+enable_dashboard = true
+dashboard_prefix = "/dashboard"
+admin_usernames = []
+# admin_usernames = ["alice", "ops"]
+
+create_tables = true
+echo_sql = false

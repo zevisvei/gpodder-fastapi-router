@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}{{ feed.title }} - {{ user.username }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ul>
+    <li><a href="{{ prefix }}/me/podcasts">Podcasts</a></li>
+    <li>{{ feed.title }}</li>
+  </ul>
+</nav>
+
+<div class="podcast-header">
+  <div class="cover" {% if feed.image %}style="background-image:url('{{ feed.image }}')"{% endif %}></div>
+  <div>
+    <h2>{{ feed.title }}</h2>
+    {% if feed.author %}<p><em>{{ feed.author }}</em></p>{% endif %}
+    <p>
+      {% if subscribed %}<span style="color:#7ce07c">● subscribed</span>{% else %}<span style="opacity:0.7">○ not subscribed</span>{% endif %}
+      · {{ feed.episodes|length }} episodes
+      · {{ action_count }} action(s)
+      {% if feed.link %} · <a href="{{ feed.link }}" target="_blank" rel="noopener">website ↗</a>{% endif %}
+      · <a href="{{ feed.url }}" target="_blank" rel="noopener">RSS ↗</a>
+    </p>
+    <form method="post" action="{{ prefix }}/me/podcasts/{{ 'unsubscribe' if subscribed else 'subscribe' }}"
+          onsubmit="return confirm('{{ 'Unsubscribe?' if subscribed else 'Subscribe to this podcast?' }}')">
+      <input type="hidden" name="url" value="{{ feed.url }}">
+      <button type="submit" class="{{ 'secondary' if subscribed else '' }}">
+        {{ 'Unsubscribe' if subscribed else 'Subscribe' }}
+      </button>
+    </form>
+    {% if feed.error %}
+    <article style="color:#e07070">Failed to load feed: {{ feed.error }}</article>
+    {% elif feed.description %}
+    <div class="desc">{{ feed.description }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<h3>Episodes</h3>
+{% for e in episodes %}
+<div class="episode-row" data-episode-url="{{ e.url }}">
+  <div class="thumb" {% if feed.image %}style="background-image:url('{{ feed.image }}')"{% endif %}></div>
+  <div class="info">
+    <div class="title">
+      {{ e.title }}
+      {% if e.completed %}<span style="color:#7ce07c;font-size:0.8rem;margin-left:0.5rem">✓ completed</span>
+      {% elif e.latest_position %}<span style="opacity:0.75;font-size:0.8rem;margin-left:0.5rem">⏵ {{ e.progress_pct }}% ({{ e.latest_position }}s)</span>
+      {% endif %}
+    </div>
+    <div class="meta">
+      {% if e.pub_ts %}{{ e.pub_ts|fmt_ts }}{% elif e.pub_date %}{{ e.pub_date }}{% endif %}
+      {% if e.duration %} · {{ e.duration|fmt_duration }}{% endif %}
+      {% if e.action_count %} · {{ e.action_count }} action(s){% endif %}
+    </div>
+    {% if e.url %}
+    <audio controls preload="none" style="width:100%;margin-top:0.5rem"
+      data-podcast="{{ feed.url }}"
+      data-episode="{{ e.url }}"
+      data-resume="{{ e.resume_at }}"
+      data-total="{{ e.duration_secs }}"
+      src="{{ e.url }}"></audio>
+    {% endif %}
+    {% if e.description %}<div class="sub" style="margin-top:0.25rem">{{ e.description[:240] }}{% if e.description|length > 240 %}…{% endif %}</div>{% endif %}
+  </div>
+</div>
+{% else %}
+<p><em>No episodes in feed.</em></p>
+{% endfor %}
+
+<script>
+(function(){
+  const username = {{ user.username|tojson }};
+  const apiUrl = '/api/2/episodes/' + encodeURIComponent(username) + '.json';
+  const deviceId = (function(){
+    let d = localStorage.getItem('gp_web_device');
+    if (!d) {
+      d = 'web-' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem('gp_web_device', d);
+    }
+    return d;
+  })();
+
+  function isoTs() {
+    return new Date().toISOString().replace(/\.\d+Z$/, '');
+  }
+
+  async function postPlay(audio, started, position) {
+    const total = parseInt(audio.dataset.total) || (isFinite(audio.duration) ? Math.floor(audio.duration) : 0);
+    const body = [{
+      podcast: audio.dataset.podcast,
+      episode: audio.dataset.episode,
+      device: deviceId,
+      action: 'play',
+      timestamp: isoTs(),
+      started: Math.floor(started),
+      position: Math.floor(position),
+      total: total || null,
+    }];
+    try {
+      await fetch(apiUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (e) { console.warn('action upload failed', e); }
+  }
+
+  document.querySelectorAll('audio[data-podcast]').forEach(audio => {
+    let startedAt = parseInt(audio.dataset.resume) || 0;
+    let lastReport = 0;
+
+    audio.addEventListener('loadedmetadata', () => {
+      const r = parseInt(audio.dataset.resume) || 0;
+      if (r > 0 && audio.currentTime < 1) {
+        try { audio.currentTime = r; } catch (_) {}
+      }
+    });
+    audio.addEventListener('play', () => {
+      startedAt = Math.floor(audio.currentTime);
+      lastReport = startedAt;
+    });
+    audio.addEventListener('pause', () => {
+      if (audio.currentTime > startedAt + 1) {
+        postPlay(audio, startedAt, audio.currentTime);
+      }
+    });
+    audio.addEventListener('ended', () => {
+      postPlay(audio, startedAt, audio.currentTime);
+    });
+    audio.addEventListener('timeupdate', () => {
+      if (audio.paused) return;
+      const now = Math.floor(audio.currentTime);
+      if (now - lastReport >= 30) {
+        lastReport = now;
+        postPlay(audio, startedAt, now);
+        startedAt = now;
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

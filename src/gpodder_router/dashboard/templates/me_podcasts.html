@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Podcasts - {{ user.username }}{% endblock %}
+{% block content %}
+<h2>Podcasts</h2>
+<p>Active subscriptions: <strong>{{ podcasts|length }}</strong></p>
+
+{% if error %}<article style="color:#e07070">⚠ {{ error }}</article>{% endif %}
+{% if notice %}<article style="color:#7ce07c">✓ {{ notice }}</article>{% endif %}
+
+<details>
+  <summary>Add a podcast</summary>
+  <p style="margin-top:0.5rem"><a href="{{ prefix }}/me/discover">→ Search the iTunes directory</a></p>
+  <form method="post" action="{{ prefix }}/me/podcasts/subscribe" style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap">
+    <input type="url" name="url" required placeholder="https://example.com/feed.xml" style="flex:1 1 24rem;min-width:0">
+    <button type="submit" style="flex:0 0 auto">Subscribe by RSS URL</button>
+  </form>
+</details>
+
+<form method="get" action="{{ prefix }}/me/podcasts">
+  <label>Sort by
+    <select name="sort" onchange="this.form.submit()">
+      <option value="latest_desc"     {% if sort == 'latest_desc' %}selected{% endif %}>Latest episode (newest first)</option>
+      <option value="latest_asc"      {% if sort == 'latest_asc' %}selected{% endif %}>Latest episode (oldest first)</option>
+      <option value="subscribed_desc" {% if sort == 'subscribed_desc' %}selected{% endif %}>Subscribed (newest first)</option>
+      <option value="subscribed_asc"  {% if sort == 'subscribed_asc' %}selected{% endif %}>Subscribed (oldest first)</option>
+      <option value="title_asc"       {% if sort == 'title_asc' %}selected{% endif %}>Title (A→Z)</option>
+      <option value="title_desc"      {% if sort == 'title_desc' %}selected{% endif %}>Title (Z→A)</option>
+      <option value="episodes_desc"   {% if sort == 'episodes_desc' %}selected{% endif %}>Episodes (most)</option>
+      <option value="episodes_asc"    {% if sort == 'episodes_asc' %}selected{% endif %}>Episodes (least)</option>
+      <option value="actions_desc"    {% if sort == 'actions_desc' %}selected{% endif %}>Activity (most)</option>
+      <option value="actions_asc"     {% if sort == 'actions_asc' %}selected{% endif %}>Activity (least)</option>
+    </select>
+  </label>
+</form>
+
+<div class="podcast-grid">
+  {% for p in podcasts %}
+  <div class="podcast-card-wrap" style="position:relative">
+    <a class="podcast-card" href="{{ prefix }}/me/podcast?url={{ p.url|urlencode_q }}">
+      <div class="cover" {% if p.image %}style="background-image:url('{{ p.image }}')"{% endif %}></div>
+      <div class="body">
+        <h4>{{ p.title }}</h4>
+        {% if p.author %}<div class="meta">{{ p.author }}</div>{% endif %}
+        <div class="meta">{{ p.episode_count }} episodes · {{ p.actions }} actions · {{ p.device_count }} device(s)</div>
+        {% if p.latest_ts %}<div class="meta">latest episode: {{ p.latest_ts|fmt_ts }}</div>{% endif %}
+        {% if p.description %}<div class="desc">{{ p.description }}</div>{% endif %}
+        {% if p.error %}<div class="err">⚠ {{ p.error }}</div>{% endif %}
+        <div class="meta"><small>since {{ p.created|fmt_ts }}</small></div>
+      </div>
+    </a>
+    <form method="post" action="{{ prefix }}/me/podcasts/unsubscribe"
+          onsubmit="return confirm('Unsubscribe from {{ p.title|e }}?')"
+          style="position:absolute;top:0.5rem;right:0.5rem">
+      <input type="hidden" name="url" value="{{ p.url }}">
+      <button type="submit" class="secondary"
+        style="padding:0.2rem 0.5rem;font-size:0.75rem;background:rgba(0,0,0,0.6);border:1px solid #555;color:#eee">✕</button>
+    </form>
+  </div>
+  {% else %}
+  <p><em>No active subscriptions.</em></p>
+  {% endfor %}
+</div>
+{% endblock %}

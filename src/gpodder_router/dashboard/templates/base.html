@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}gpodder dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="{{ prefix }}/static/dashboard.css">
+</head>
+<body>
+  <header class="container">
+    <nav>
+      <ul>
+        <li><strong>gpodder</strong></li>
+      </ul>
+      <ul>
+        {% if request.cookies.get('sessionid') %}
+          {% if is_admin %}
+          <li><a href="{{ prefix }}/">Admin</a></li>
+          <li><a href="{{ prefix }}/users">Users</a></li>
+          {% endif %}
+          <li><a href="{{ prefix }}/me/">My dashboard</a></li>
+          <li><a href="{{ prefix }}/me/podcasts">Podcasts</a></li>
+          <li><a href="{{ prefix }}/me/discover">Discover</a></li>
+          <li><a href="{{ prefix }}/me/episodes">Episodes</a></li>
+          <li><a href="{{ prefix }}/me/actions">Actions</a></li>
+          <li><a href="{{ prefix }}/me/stats">Stats</a></li>
+          <li><a href="{{ prefix }}/me/debug">Debug</a></li>
+          <li><a href="/docs" target="_blank">API</a></li>
+          <li><a href="{{ prefix }}/logout">Logout</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="container">
+    <small>gpodder-fastapi-router</small>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,16 @@
+services:
+  gpodder:
+    build: .
+    container_name: gpodder-router
+    ports:
+      - "8000:8000"
+    environment:
+      GPODDER_DATABASE_URL: sqlite+aiosqlite:////data/gpodder.db
+      GPODDER_BASE_URL: ${GPODDER_BASE_URL:-http://localhost:8000}
+      GPODDER_ADMIN_USERNAMES: ${GPODDER_ADMIN_USERNAMES:-[]}
+    volumes:
+      - gpodder-data:/data
+    restart: unless-stopped
+
+volumes:
+  gpodder-data:

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Discover - {{ user.username }}{% endblock %}
+{% block content %}
+<h2>Discover podcasts</h2>
+<p><small>Powered by iTunes Search API.</small></p>
+
+<form method="get" action="{{ prefix }}/me/discover" style="display:flex;gap:0.5rem;flex-wrap:wrap">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search title, author, topic…" required style="flex:1;min-width:240px">
+  <select name="country" style="max-width:140px">
+    {% for code in ['US','GB','IL','DE','FR','ES','IT','BR','JP','AU','CA','MX','RU','NL','SE','PL','TR','IN'] %}
+    <option value="{{ code }}" {% if country == code %}selected{% endif %}>{{ code }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">Search</button>
+</form>
+
+{% if q %}
+<p>{{ results|length }} result(s) for <strong>{{ q }}</strong></p>
+<div class="podcast-grid">
+  {% for r in results %}
+  {% set is_sub = r.feed_url in subscribed_urls %}
+  <div class="podcast-card-wrap" style="position:relative">
+    <a class="podcast-card" href="{{ prefix }}/me/podcast?url={{ r.feed_url|urlencode_q }}">
+      <div class="cover" {% if r.image %}style="background-image:url('{{ r.image }}')"{% endif %}></div>
+      <div class="body">
+        <h4>{{ r.title }}</h4>
+        {% if r.author %}<div class="meta">{{ r.author }}</div>{% endif %}
+        <div class="meta">
+          {% if r.genre %}{{ r.genre }}{% endif %}
+          {% if r.track_count %} · {{ r.track_count }} episodes{% endif %}
+          {% if r.country %} · {{ r.country }}{% endif %}
+        </div>
+      </div>
+    </a>
+    <form method="post"
+          action="{{ prefix }}/me/podcasts/{{ 'unsubscribe' if is_sub else 'subscribe' }}"
+          style="position:absolute;top:0.5rem;right:0.5rem">
+      <input type="hidden" name="url" value="{{ r.feed_url }}">
+      <button type="submit" class="{{ 'secondary' if is_sub else '' }}"
+        style="padding:0.25rem 0.6rem;font-size:0.75rem;background:rgba(0,0,0,0.7);border:1px solid #555;color:#eee">
+        {{ '✓ subscribed' if is_sub else '+ subscribe' }}
+      </button>
+    </form>
+  </div>
+  {% else %}
+  <p><em>No results.</em></p>
+  {% endfor %}
+</div>
+{% else %}
+<p><em>Enter a search term above.</em></p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ user.username }} - gpodder admin{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ul>
+    <li><a href="{{ prefix }}/users">Users</a></li>
+    <li>{{ user.username }}</li>
+  </ul>
+</nav>
+<h2>{{ user.username }}</h2>
+<p>Email: {{ user.email or '—' }} · Episode actions logged: <strong>{{ action_count }}</strong></p>
+
+<h3>Devices ({{ devices|length }})</h3>
+<table>
+  <thead><tr><th>ID</th><th>Caption</th><th>Type</th></tr></thead>
+  <tbody>
+    {% for d in devices %}
+    <tr><td>{{ d.deviceid }}</td><td>{{ d.caption or '' }}</td><td>{{ d.type }}</td></tr>
+    {% else %}
+    <tr><td colspan="3"><em>none</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Active subscriptions ({{ subscriptions|length }})</h3>
+<table>
+  <thead><tr><th>Podcast URL</th><th>Device</th></tr></thead>
+  <tbody>
+    {% for s in subscriptions %}
+    <tr><td><code>{{ s.podcast_url }}</code></td><td>{{ s.device_id }}</td></tr>
+    {% else %}
+    <tr><td colspan="2"><em>none</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

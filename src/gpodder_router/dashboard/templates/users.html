@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Users - gpodder admin{% endblock %}
+{% block content %}
+<h2>Users</h2>
+
+{% if error %}
+<article style="color:#c33">{{ error }}</article>
+{% endif %}
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>Username</th><th>Email</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.id }}</td>
+      <td><a href="{{ prefix }}/users/{{ u.username }}">{{ u.username }}</a></td>
+      <td>{{ u.email or '' }}</td>
+      <td>
+        <details>
+          <summary>Reset password</summary>
+          <form method="post" action="{{ prefix }}/users/{{ u.username }}/password" style="display:flex;gap:0.5rem">
+            <input type="password" name="password" placeholder="new password" required>
+            <button type="submit">Update</button>
+          </form>
+        </details>
+        {% if u.username != admin.username %}
+        <form method="post" action="{{ prefix }}/users/{{ u.username }}/delete"
+              onsubmit="return confirm('Delete {{ u.username }}?')">
+          <button type="submit" class="secondary">Delete</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Create user</h3>
+<form method="post" action="{{ prefix }}/users">
+  <div class="grid">
+    <label>Username <input name="username" required></label>
+    <label>Password <input name="password" type="password" required></label>
+    <label>Email <input name="email" type="email"></label>
+  </div>
+  <button type="submit">Create</button>
+</form>
+{% endblock %}

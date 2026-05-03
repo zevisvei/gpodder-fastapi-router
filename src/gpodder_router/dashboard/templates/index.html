@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Overview - gpodder admin{% endblock %}
+{% block content %}
+<h2>Overview</h2>
+<p>Signed in as <strong>{{ admin.username }}</strong>.</p>
+<div class="grid">
+  <article><header>Users</header><h3>{{ stats.users }}</h3></article>
+  <article><header>Devices</header><h3>{{ stats.devices }}</h3></article>
+  <article><header>Active subs</header><h3>{{ stats.subscriptions }}</h3></article>
+  <article><header>Episode actions</header><h3>{{ stats.episode_actions }}</h3></article>
+  <article><header>Podcast lists</header><h3>{{ stats.podcast_lists }}</h3></article>
+</div>
+<h3>Quick links</h3>
+<ul>
+  <li><a href="{{ prefix }}/users">Manage users</a></li>
+  <li><a href="/docs" target="_blank">Swagger UI</a></li>
+  <li><a href="/redoc" target="_blank">ReDoc</a></li>
+  <li><a href="/openapi.json" target="_blank">OpenAPI spec</a></li>
+</ul>
+{% endblock %}

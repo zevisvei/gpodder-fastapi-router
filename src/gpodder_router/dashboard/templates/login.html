@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Login - gpodder admin{% endblock %}
+{% block content %}
+<h2>Sign in</h2>
+{% if error %}
+<article style="color:#c33">{{ error }}</article>
+{% endif %}
+<form method="post" action="{{ prefix }}/login">
+  <label>Username
+    <input type="text" name="username" required autocomplete="username">
+  </label>
+  <label>Password
+    <input type="password" name="password" required autocomplete="current-password">
+  </label>
+  <button type="submit">Sign in</button>
+</form>
+<p><small>Regular users get a personal dashboard. Admin users see the management view.</small></p>
+{% endblock %}
